@@ -1,0 +1,29 @@
+1. 了解HashMap吗？HashMap的底层实现（hash算法，数据结构，扩容，负载因子和初始容量）
+答：HashMap的特点（1）数据结构是数组+链表，在1.8中改成了Node+链表+红黑树
+                （2）存储的是无序的key-value键值对，允许null值
+                （3）线程不安全
+hash算法：1.7中利用了四次的抖动函数，而在1.8中只有一次，计算index的方法h&(length-1)，同时需要考虑扩容，当table.size大于
+         负载因子*初始容量时就需要考虑扩容。
+HashMap的容量大小，为什么要用2的幂次方？为了减少碰撞冲突，这里需要考虑index的计算方法。
+HashMap的null：在table[0]进行头插，头插之前需要进行判断扩容。
+在HashMap中如何实现的减少碰撞？（1）扰动函数，目的是让不同的对象有不同的hashcode（2）使用不可变的、final对象作为键，使用String、Integer等这样的
+wrapper类适合作为键，因为他们有固定的hashcode和equals方法，而且不可变。
+为什么使用红黑树而不是用BST或者二叉平衡树？二叉查找树在特殊情况下会变成一条线性结构（这就跟原来使用链表结构一样了，造成层次很深的问题），遍历查找会非常慢
+HashMap的死循环是因为什么导致的？这是在扩容的时候导致的，因为在扩容将老的链表转移到新的链表中时，JDK1.7之前采用的是头插法，可能导致死循环。
+设置了modCount值，volatile型，其目的是在iterator的时候不允许修改其key和value的值，如果修改就会检查modCount的值，报错ConcurrentModificationException。
+2. HashTable
+和HashMap相比，（1）它是线程安全的，但是效率低。
+              （2）存储的也是键值对，初始容量是11，扩容公式是2X+1，最好是质数
+              （3）不允许null值，若出现null值会报错，空指针异常
+              （4）计算index的方式低效
+3. 可以使用ConcurrentHashMap替代HashTable吗？可以，但是HashTable提供更高的安全性。
+ConcurrentHashMap：1.7中实现了Segment+数组+链表，其中Segment基于ReentrantLock，一个数据段竞争一个锁。
+                   1.8中使用的是Node+数组+链表，采用CAS+synchronized来实现。其中val，next都用volatile实现，保证了可见性。在put操作中，先计算hashcode
+                   得到Node的位置，若为空则此时采用CAS尝试写入，若不成功则自旋直至成功。若f.hash==-1，则需要扩容，若都不满足则插入，另外需要考虑是否转为
+                   红黑树的情况。
+4. TreeMap和LinkedHashMap
+LinkedHashMap：有序，可以理解成HashMap+LinkedList，双向链表，有head、tail。
+TreeMap:底层结构是红黑树，有序的HashMap，主要他实现了SortMap接口，重写了Comparator方法。
+5. ArrayList,LinkedList，Vector，若要多线程访问ArrayList，则需要使用Collections.synchronizedList();
+6. HashSet, TreeSet
+                
