@@ -14,5 +14,76 @@
           后再释放monitor。
 优化：synchronized是通过对象内部的监视器来实现的，而监视器则依赖于操作系统底层的Mutex Lock实现。故线程的切换需要从用户态转成核心态，成本高。
      故在后续的JDK1.6中，对其进行了优化，引入了"轻量级锁"和"偏向锁"。
-     （1）轻量级锁：首先其并不是用来替代重量级锁，而是为了在没有多线程竞争时减少性能消耗。
-     
+     （1）轻量级锁：首先其并不是用来替代重量级锁，而是为了在没有多线程竞争时减少性能消耗。在代码进入同步代码块前，如果同步对象锁为无锁状态（锁标志
+         位为“01”，偏向锁为“0”，JVM将在当前的线程栈中新建一个叫Lock Record的空间，用于存储当前对象Mark Word的拷贝（又叫Displaced Mark Word），
+         然后将锁的Mark Word拷贝到Lock Record中，并尝试利用CAS的操作修改Mark Word更新为指向Lock Record的指针，并将Lock Record中的owner指针指向
+         object mark word。如果更新成功，则表明该线程获得了对象的锁，若不成功则进入自旋直至获得该锁。
+     （2）偏向锁：CAS操作
+     （3）适应性自旋：线程如果自旋成功了，则下次自旋的次数会更多，如果自旋失败了，则自旋的次数就会减少。
+     （3）锁粗化：将多次连接在一起的加锁、解锁操作合并为一次，将多个连续的锁扩展成一个范围更大的锁。
+     （4）锁消除：删除不必要的加锁操作。根据代码逃逸技术，如果判断到一段代码中，堆上的数据不会逃逸出当前线程，那么可以认为这段代码是线程安全的，不
+         必要加锁。
+2. 线程间的协作（wait/sleep/notify/notifyAll/yield/join)
+   (1)wait方法：将当前运行的线程挂起（即让其进入阻塞状态），直到notify或notifyAll方法来唤醒线程.
+  （2）notify/notifyAll方法：唤醒线程
+  （3）sleep/yield/join：暂停当前线程
+3. volatile关键字：
+   （1）防止重排序：即在volatile语句前的语句不可能放到volatile后面执行，后面的语句不可能放到前面执行。
+   （2）保证可见性：当一个线程修改了某个volatile值，其他线程是立即可见的。
+   （3）原理：观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，会多出一个lock前缀指令。
+   也就是说相当于多加了一个内存屏障，其作用在于①：确保指令重排序时不会把后面的指令拍到内存屏障之前的位置，也不会把前面的指令排到内存屏障之后。
+   ②强制将对缓存的修改操作立即写入内存③如果是写操作，会导致其他CPU中对应的缓存无效。
+4. Lock接口
+   （1）简介：JDK1.5以后，如ReentrantLock，ReentrantReadWriteLock，StampedLock
+   （2）特点：尝试非阻塞的获取锁，获取到锁的线程能响应中断，超时获取锁，支持公平锁
+   （3）实现类：①ReentrantLock
+               ②Condition接口：ReentrantLock通过Condition接口和newCondition()方法来实现等待/通知机制。
+               condition.await(),condition.signal(), condition.signalAll()
+               ③公平锁：FIFO，非公平锁：随机获取
+5. 其他概念
+   （1）协程（coroutine）：一种比线程更加轻量级的存在，一个线程可以有多个协程。
+       特点：协程不是被OS内核管理，而是由程序控制，这样减少了上下文切换的消耗。
+            协程拥有自己的寄存器上下文和栈，协程调度切换时，将寄存器上下文和栈保存到其他地方，切回来的时候恢复保存的上下文和栈。不需要线程切换的开销
+   （2）CAS（compare and swap)
+6. 线程池
+   （1）优点：降低资源消耗，提高响应速度，便于线程管理。
+   （2）原理分析：①构造函数，包含corePoolSize、maximunPoolSize、keepAliveTime、workQueue、threadFactory、handler
+                 corePoolSize：核心线程数，线程数量小于该值时直接创建新线程
+                                         线程数量大于corePoolSize，workQueue未满，则缓存新任务
+                                         线程数量大于corePoolSize，但小于maximunPoolSize，且workQueue已满，则创建新线程处理新任务
+                                         线程数量大于max，且workQueue已满，则使用拒绝策略处理新任务。
+                ②资源回收：对于线程池超过corePoolSize数量的空闲线程进行回收，当线程空闲时间超过keepAliveTime时进行回收。
+                ③排队策略：SynchronousQueue、ArrayBlockingQueue，LinkedBlockingQueue，PriorityBlockingQueue
+                ④拒绝策略: AbortPolicy, DiscardPolicy, DiscardOldestPolicy, CallerRunsPolicy.
+   （3）重要操作
+               ①线程创建和复用：内部类Worker，调用ThreadFactory创建线程，默认是Executors.defaultThreadFactory().
+               ②提交任务：submit()方法：返回一个FutureTask对象，可以通过它去查看线程的执行状态
+               ③关闭线程池：shutdown和shutdownNow方法。
+   （4）分类：newFixedThreadPool(int nThreads):固定线程数的线程池，默认情况下空闲线程不会被回收，适用于负载较重的服务器
+             newCachedThreadPool：线程数量不定的线程池，线程数量随任务量变动，空闲线程存活时间超过60s会被回收，适用于执行很多短期异步任务的小程序，
+                                  负载较轻服务器
+             newSingleThreadExecutor：线程数为1的线程池，不会有多个线程的活动
+             newScheduledThreadPool(corePoolSize):，可执行定时任务
+             newSingledThreadScheduledExecutor
+
+7.JUC包
+(1) 原子类
+四种：基本类型（AtomicInteger,AtomicLong,AtomicBoolean)、数组类型（AtomicIntegerArray,AtomicLongArray,AtomicReferenceArray）、
+     引用类型（AtomicReference,AtomicStampedReference,AtomicMarkableReference）、对象的属性修改类型（AtomicIntegerFieldUpdater,AtomicLongFieldUpdate,
+     AtomicStampedReference）
+如何保证原子性：CAS，调用的是Unsafe类，当且仅当内存地址V的值和预期值相等时，将内存地址V的值修改为B，否则什么都不做。 
+缺点：ABA（AtomicStampedReference类解决，使用版本号+CAS）、循环时间开销大、只能保证一个共享变量的原子操作。
+（2)AQS(abstractQueueSynchronizer):抽象队列同步器，是很多同步器的基础框架。 如ReentrantLock，CountDownLatch，CyclicBarrier.
+核心思想：如果被请求的共享资源空闲，则将请求资源的线程设为有效的工作线程，并将共享资源设为锁定状态，若资源被占用，则需要一套线程阻塞等待以及被唤醒时锁分配
+的机制，这个机制AQS是使用CLH队列（FIFO）锁实现的。
+private volatile int state;//使用一个int成员变量来表示同步状态。状态方法：getState,setState,compareAndSetState(int expect, int update)
+对资源的共享方式：独占式（如ReentrantLock）和共享式（如Semaphore/CountDownLatch等）。
+底层使用了模板方法模式，只需要重写指定方法（对共享资源state的获取和释放）：isHeldExclusively().tryAcquire(int),tryRelease(int),tryAcquireShared(int),
+tryReleaseShared(int)
+举例：Semaphore:允许多个线程同时访问
+     CountDownLatch：是一个同步工具类，允许一个或多个线程等待，直到其他线程操作执行完再执行。倒计时器，当计数为0时开始执行后续的线程。（不足：一次性的，不能重置）
+     应用：某一线程等待前n个线程执行完；实现多个线程开始执行任务的最大并行性；死锁检测（n个线程访问共享资源，每次测试时县城数目不同，并尝试产生死锁。）
+     CyclicBrarrier：和CountDownLatch类似，可以实现线程间的等待。让一组线程到达一个屏障（同步点）时被阻塞，直到最后一个线程到达屏障时才会开门，被拦截的线程
+     可以继续工作。同时加入了barrierAction，可以在线程到达屏障后优先执行。
+     和CountDownLatch相比，有重置功能，在计数到达指定值时可以重置为0重新开始，调用await方法计数+1，若+1后的值不等于构造方法的值则线程阻塞。
+   
