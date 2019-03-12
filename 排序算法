@@ -39,3 +39,70 @@
     }
     时间复杂度：最好O(n^2),最坏O(n^2)
     （2）堆排序：分为两步，一是建立堆，二是堆顶与堆的最后一个元素交换位置。
+    public class HeapSort {
+    public static void sort(int[] arr) {
+        //构建大顶堆
+        for(int i = arr.length/2-1; i >=0; i--) {
+            //从第一个非叶子节点从下至上调整结构
+            adJustHeap(arr, i, arr.length);
+        }
+
+        for(int i = arr.length-1; i > 0; i--) {
+            swap(arr, 0, i);
+            adJustHeap ( arr, 0, i );
+        }
+    }
+
+    public static void swap(int[] arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+    public static void adJustHeap(int[] arr, int i, int length) {
+        int temp = arr[i];
+        for(int j = 2*i+1; j < length; j = j * 2+1) {
+            if(j+1 < length && arr[j+1] > arr[j]){
+                j++;
+            }
+            if(arr[j] > temp) {
+                arr[i] = arr[j];
+                i = j;
+            } else{
+                break;
+            }
+        }
+        arr[i] = temp;
+    }
+
+    public static void main(String[] args) {
+        int []arr = {9,8,7,6,5,4,3,2,1};
+        sort(arr);
+        System.out.println( Arrays.toString(arr));
+    }
+}
+复杂度分析：
+时间复杂度：O(nlogn)，不稳定排序。
+空间复杂度：O(1)
+4. 交换排序
+（1）冒泡排序：
+public void bubbleSort(int[] array) {
+        int len = array.length;
+        for(int i = 0; i < len; i++) {
+            for(int j = 0; j < len - i -1; j++) {
+                if(array[j] > array[j+1]){
+                    int temp = array[j];
+                    array[j] = array[j+1];
+                    array[j+1] = temp;
+                }
+            }
+        }
+    }
+复杂度分析：最好O(n),最坏O(n^2),平均O(n^2)，空间复杂度O(1)
+(2)快速排序：分治法。
+基本方法：
+
+
+
+
+
+
