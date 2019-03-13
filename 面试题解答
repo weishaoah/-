@@ -68,3 +68,71 @@ GC收集器：新生代（1）Serial：单线程的复制算法
                 缺点：对CPU资源敏感，可能产生浮动垃圾，使用的是标记-清除算法，产生内存碎片
                 （4）G1：堆内存布局就不同，分为region，里面有新生代和老年代的区别。
          
+5. Mysql数据库：
+常用SQL语句要会写：
+建表：CREATE TABLE 'score'('id' BIGINT(20) NOT AUTO_INCREMENT, 'score' INT(11) NULL DEFAULT NULL, 'user_id' BIGINT(20) 
+                  NULL DEFAULT NULL, PRIMARY KEY('id'))
+插入：INSERT INTO score(change_type, score, user_id)VALUES('吃饭',10,1);
+删除：delete from score/truncate table score
+更新：UPDATE score SET change_type='洗澡'where id=2;
+修改表：alter table score drop 'score'，删除某一列
+查询流程：客户端发送一条查询指令给服务器--服务器检查缓存，如果命中了缓存则返回缓存，否则进入下一轮--服务器解析SQL，预处理（检验其是否合法），再由优化器生成对应的执行计划--
+         mysql根据优化器生成的执行计划，调用存储引擎的API来查询--将结果返回给客户端
+如何mysql高性能：查询优化，索引优化和库表结构优化
+查询优化：扫描行数、返回行数和响应时间（分解查询）
+        慢查询：超过指定时间的查询语句的查询
+        LIMIT限制查询条数，ORDER BY，开启查询缓存
+         多表查询：
+         内连接：select d.Good_ID,d.Classify_ID,d.Good_Name from Commodity_list d inner join commodity_classification c on d.Classify_Description=c.Good_kinds_Name
+         左连接select * from commodity_classification c left join commodity_list d on d.classify_description=c.good_kinds_name
+         左连接升级：select * from commodity_classification c left join commodity_list d on d.classify_description=c.good_kinds_name where d.classify_description is null.
+         右连接：right join
+         右连接升级
+         全外连接（full join），mysql不支持，但可以通过left join union right join实现
+索引优化：
+索引分类：聚集索引和非聚集索引，聚集索引就是按照数据存放的物理位置为顺序的，以主键创建的索引，如InnoDB的索引，可以查询区间值，节点包含了数据文件，要求必须有主键。而非聚集索引是MyISAM的默认索引。
+为什么需要索引：提高查询速度，就要减少磁盘访问次数。数据是在磁盘上以块的形式存放的。
+在上述分类之下，还可以细分：普通索引，唯一索引（列值唯一，不允许空值），全文索引（作用于CHAR，VCHAR，TEXT等），组合索引
+创建索引：INDEX
+查看索引：SHOW INDEX from [table_name]
+索引的底层原理/数据结构：分为两种哈希索引和BTree索引。前者是基于hash表构成，适合单条查询。
+而BTree索引，实际上使用的有两种，B-Tree和B+Tree，是MyISAM和InnoDB的索引结构。是一种多路的搜索树。
+特点：关键字集合在整棵树中；任何关键字出现且只出现在一个节点中；搜索可能在非叶子节点结束；搜索性能相当于在关键字全集内做一次二分查找，自动的层次控制。
+B+Tree树，和B-Tree索引相比，有一些不同点：非叶子结点的子树指针与关键字个数相同；非叶子节点的子树指针P[i]，指向关键字属于K[i],K[i+1]的子树；所有的叶子节点
+有一个链指针，内节点不存储data，只存储key
+查询要尽量覆盖索引，这样就不用回表了。
+索引最左匹配原则：当匹配到索引（in，between，>）时就停止匹配了
+
+事务：一组原子性的sql命令或者一个独立的工作单元。性质：ACID
+A:Atomic原子性，事务是最小的执行单位，不允许分割
+C:Consistency一致性，执行事务前后，数据库从一个一致性状态转换到另一个状态
+I：Isolation隔离性，并发访问数据库时一个用户的事务不会被干扰
+D: Durability持久性，一个事务被提交之后它对数据库的改变是持久的，即使数据库故障也不会改变
+事务隔离级别（一个事务可能受其他并发事务影响的程度）：
+READ_UNCOMMITTED(未提交读)，最低的级别，允许读取尚未提交的数据变更，可能会导致脏读、幻读或不可重复读
+READ_COMMITTED（提交读）：允许读取并发事务已经提交的数据，可阻止脏读，但幻读或者不可重复读仍有可能发生
+REPEATABLE_READ(可重复读)：对同一字段的多次读取结果是一致的，除非数据被本身事务自己修改，可以阻止脏读和不可重复读，但幻读仍有可能发生
+SERIALIZABLE(串行):最高隔离级别，完全服从ACID的隔离级别，所有事务依次逐个执行，可以防止脏读、幻读以及不可幻读。
+Mysql默认采用可重复读的隔离级别，事务隔离机制的实现基于锁机制和并发调度，并发调度使用的是MVCC（多版本并发控制），其实就是行级锁的一个升级，通过
+行的创建时间和行的过期时间来支持并发一致性和回滚等特性。
+
+注：脏读：一个事务正在访问并修改数据，但还没有提交到数据库，而另一个事务访问数据库也访问并使用了这个数据，但是这个数据还没有提交。因此是脏数据
+   不可重复读：指在一个事务内多次读同一数据。但是在读取的两次之间如果有另一个事务访问并修改了这个数据，会导致第一个事务两次读取的数据不一致。
+   幻读：在一个事务读取了几行数据，接着另一个事务插入了几行，然后第一个事务查询发现多了几行，像是出现了幻觉一样。
+MVCC：同一份数据保留多个版本的方式，实现并发控制。读写并存时，写操作会根据目前数据库的状态创建一个新版本，并发的读依旧访问旧版本数据。
+
+
+大表优化：（1）限定数据范围（2）读/写分离，主库负责写，从库负责读
+分区主要目的是将数据按照一个较粗的粒度分在不同的表中。一个表最多有1024个分区。将数据分摊到不同的硬盘、系统或不同服务器存储介质中。
+         （3）垂直分区：根据数据库里数据表的相关性进行拆分，保留主键
+         （4）水平分区：将一张表拆成多张表，每张表的结构相同。但最好是分库。
+
+索引何时失效？最左前缀匹配原则，当索引中出现in，between，<，or之类的时候，like中使用模糊查询，搜索一个索引另一个做order by的时候，索引如果是字符串
+一定要加上引号
+
+
+
+
+
+
+
