@@ -23,7 +23,7 @@ ConcurrentHashMap：1.7中实现了Segment+数组+链表，其中Segment基于Re
                    红黑树的情况。
 4. TreeMap和LinkedHashMap
 LinkedHashMap：有序，可以理解成HashMap+LinkedList，双向链表，有head、tail。
-TreeMap:底层结构是红黑树，有序的HashMap，主要他实现了SortMap接口，重写了Comparator方法。
+TreeMap:底层结构是红黑树，有序的HashMap，主要重写了Comparator方法。
 5. ArrayList,LinkedList，Vector，若要多线程访问ArrayList，则需要使用Collections.synchronizedList();
 6. HashSet, TreeSet
                 
