@@ -1,0 +1,7 @@
+1. 数据类型：字符串，数字，布尔，数组，对象，Null，undefined
+数组：var cars = new Array("1", "2", "3");
+     var cars = ["1", "2", "3"];
+对象 var person={firstname:"Bill", lastname:"Gates", id:5566};
+对象的寻址方法：name=person.lastname;  或  name = person["lastname"];
+2. 函数，方法，运算符都类似于java
+3. 闭包：函数A返回了函数B，并且B中使用了A的变量，则B称为闭包。
