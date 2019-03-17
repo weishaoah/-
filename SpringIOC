@@ -1,1 +1,9 @@
-1. 体系结构：
+1. 体系结构：核心容器由核心（Core）、Bean、上下文（Context）和SpEL（表达语言）模块组成：
+            核心：提供了框架的基本组成，包括IoC和依赖注入功能
+            Beans：提供了BeanFactory，是一个工厂模式的
+            上下文：建立在由核心和Bean模块提供的坚实基础上，是访问定义和配置的任何对象的媒介。如ApplicationContext接口
+            SpEL：提供了查询和操作一个对象图的强大的表达式语言。
+            
+            Data Access/Intergation:包括JDBC，ORM（Object Relational Mapping，集成层或者持久层），OXM（抽象层），JMS和事务处理模块。
+            
+            Web模块：提供了基本的面向web的集成功能，如文件上传和使用servlet监听器和面向web应用程序的上下文来初始化IoC容器。
